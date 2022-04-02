@@ -77,6 +77,6 @@ class MainService {
         }
         println(budget)
         println(countShares)
-        return Value(budget + countShares * valCurs.list[valCurs.list.size-1].value?.toDouble()!!)
+        return Value((budget + countShares * valCurs.list[valCurs.list.size-1].value?.toDouble()!!)/10000000)
     }
 }
