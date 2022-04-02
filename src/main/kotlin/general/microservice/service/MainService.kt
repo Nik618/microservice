@@ -1,6 +1,7 @@
 package general.microservice.service
 
 import com.google.gson.Gson
+import general.microservice.dto.Value
 import general.microservice.pojos.ValCurs
 import general.microservice.repository.MainRepository
 import org.springframework.web.bind.annotation.PostMapping
@@ -20,7 +21,7 @@ class MainService {
     var gson = Gson()
 
     @PostMapping("/api/1")
-    fun greeting(@RequestBody request: String?) {
+    fun greeting(@RequestBody request: String?): Value {
 
 //        val parts: Array<MainRequest> = gson.fromJson(request, object : TypeToken<Array<MainRequest>>() {}.type)
 //        parts.forEachIndexed {
@@ -76,5 +77,6 @@ class MainService {
         }
         println(budget)
         println(countShares)
+        return Value(budget + countShares * valCurs.list[valCurs.list.size-1].value?.toDouble()!!)
     }
 }
