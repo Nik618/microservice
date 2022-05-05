@@ -6,7 +6,8 @@ import javax.persistence.*
 @Table(name="test_table")
 open class MainEntity {
 
-    constructor(_value : String): this() {
+    constructor(_name : String, _value : String): this() {
+        this.name = _name
         this.value = _value
     }
 
@@ -16,6 +17,9 @@ open class MainEntity {
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     open var id: Long? = null
+
+    @Column(name = "name", nullable = false)
+    open var name: String? = null
 
     @Column(name = "value", nullable = false)
     open var value: String? = null

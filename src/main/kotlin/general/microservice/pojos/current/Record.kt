@@ -1,4 +1,4 @@
-package general.microservice.pojos
+package general.microservice.pojos.current
 
 import org.simpleframework.xml.Element
 import org.simpleframework.xml.ElementList
