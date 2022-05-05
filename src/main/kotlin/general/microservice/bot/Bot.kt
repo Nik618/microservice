@@ -34,6 +34,7 @@ class Bot : TelegramLongPollingBot() {
     private val token: String = ""
 
     private var sendNumber = false
+    private var startRemove = false
 
     lateinit var valCurs : ValCurs
 
@@ -44,6 +45,7 @@ class Bot : TelegramLongPollingBot() {
     private var idV = ""
 
     val list : MutableList<MutableList<String>> = mutableListOf()
+    val listCurrents : MutableList<MutableList<String>> = mutableListOf()
 
     override fun getBotToken(): String = token
 
@@ -58,6 +60,15 @@ class Bot : TelegramLongPollingBot() {
 
                 if (messageText.equals("/start"))
                     send1(chatId, messageText)
+
+                if (startRemove) {
+                    listCurrents.forEach() {
+                        if (it.get(0).equals(messageText)) {
+                            repository.delete(repository.findByName(messageText)!!)
+                        }
+                    }
+                    startRemove = false
+                }
 
                 if (sendNumber) {
                     val responseMessage = SendMessage(chatId.toString(), "Отслеживание запущено!")
@@ -170,13 +181,19 @@ class Bot : TelegramLongPollingBot() {
         val mainEntities = repository.findAll()
         mainEntities.forEach() {
             responce += "${it.name}\n"
+            listCurrents.add(mutableListOf(it.name!!))
         }
+        responce += "\nВыберите, что перестать отслеживать:"
 
         val responseMessage = SendMessage(chatId.toString(), responce)
 
-
+        responseMessage.replyMarkup = getReplyMarkup(
+            listCurrents
+        )
 
         responseMessage.enableMarkdown(true)
+
+        startRemove = true
         execute(responseMessage)
     }
 
