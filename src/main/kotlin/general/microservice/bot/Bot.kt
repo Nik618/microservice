@@ -65,8 +65,10 @@ class Bot : TelegramLongPollingBot() {
                     listCurrents.forEach() {
                         if (it.get(0).equals(messageText)) {
                             repository.delete(repository.findByName(messageText)!!)
+                            send1(chatId, messageText)
                         }
                     }
+                    listCurrents.clear()
                     startRemove = false
                 }
 
