@@ -6,9 +6,10 @@ import javax.persistence.*
 @Table(name="test_table")
 open class MainEntity {
 
-    constructor(_name : String, _value : String): this() {
+    constructor(_name : String, _value : String, _chatId: String): this() {
         this.name = _name
         this.value = _value
+        this.chatId = _chatId
     }
 
     constructor()
@@ -23,4 +24,7 @@ open class MainEntity {
 
     @Column(name = "value", nullable = false)
     open var value: String? = null
+
+    @Column(name = "chatid", nullable = false)
+    open var chatId: String? = null
 }

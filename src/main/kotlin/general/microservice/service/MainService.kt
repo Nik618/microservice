@@ -1,5 +1,6 @@
 package general.microservice.service
 
+import general.microservice.bot.Bot
 import general.microservice.entities.MainEntity
 import general.microservice.pojos.current.ValCurs
 import general.microservice.repository.MainRepository
@@ -59,7 +60,7 @@ class MainService {
 
             var urlString = "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s"
             val apiToken = "5306557210:AAGP184LM3Z_u0r2txzo-EMze_kzfec0oGg"
-            val chatId = "1385518289"
+            val chatId = it.chatId //"1385518289"
             val text = "Цена достигла указанного значения! Текущая цена: $value"
             urlString = String.format(urlString, apiToken, chatId, text)
             val url = URL(urlString)

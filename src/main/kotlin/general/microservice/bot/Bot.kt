@@ -64,7 +64,7 @@ class Bot : TelegramLongPollingBot() {
                 if (startRemove) {
                     listCurrents.forEach() {
                         if (it.get(0).equals(messageText)) {
-                            repository.delete(repository.findByName(messageText)!!)
+                            repository.delete(repository.findByNameAndChatId(messageText, chatId.toString())!!)
                             send1(chatId, messageText)
                         }
                     }
@@ -83,7 +83,7 @@ class Bot : TelegramLongPollingBot() {
 //                    val httpClient: CloseableHttpClient? = HttpClientBuilder.create().build()
 //                    val post = HttpPost("https:/")
 
-                    val mainEntity = MainEntity(valute, messageText)
+                    val mainEntity = MainEntity(valute, messageText, chatId.toString())
                     repository.save(mainEntity)
                     sendNumber = false
                 }
