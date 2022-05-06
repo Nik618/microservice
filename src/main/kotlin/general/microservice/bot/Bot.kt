@@ -127,7 +127,7 @@ class Bot : TelegramLongPollingBot() {
     }
 
     private fun send1(chatId: Long, responseText: String) {
-        val responseMessage = SendMessage(chatId.toString(), responseText)
+        val responseMessage = SendMessage(chatId.toString(), "...")
         responseMessage.enableMarkdown(true)
         // добавляем кнопки
         responseMessage.replyMarkup = getReplyMarkup(
