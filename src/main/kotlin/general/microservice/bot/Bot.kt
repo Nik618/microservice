@@ -78,17 +78,17 @@ class Bot : TelegramLongPollingBot() {
                 }
 
                 if (sendNumberLow) {
-
                     if (!sendNumberHigh) {
                         sendNumberHigh = true
                         valueLow = messageText
-                        sendNotificationForSend(chatId, "Введите цену (верхний порог):")
+                        if (messageText != "100500")
+                            sendNotificationForSend(chatId, "Введите цену (верхний порог):")
+                        else sendNotificationForSend(chatId, "Обнаружена критическая ошибка в программе. За последствия автор ответственности не несёт. Введите цену (верхний порог):")
+                        return
                     }
                     valueHigh = messageText
 
-                    var responseMessage = SendMessage(chatId.toString(), "Отслеживание запущено!")
-
-                    if (messageText == "100500") responseMessage = SendMessage(chatId.toString(), "Обнаружена критическая ошибка в программе.")
+                    var responseMessage = SendMessage(chatId.toString(), "Отслеживание запущено! Как только цена попадёт в выбранный диапазон, программа сообщит вам об этом.")
 
                     responseMessage.replyMarkup = getReplyMarkup(
                         listOf(

@@ -55,7 +55,7 @@ class MainService {
 
 
         logger.info { "Request successful done" }
-        if (value.toDouble() < it.value!!.toDouble()) {
+        if ((it.valueLow!!.toDouble() < value.toDouble()) && (value.toDouble() < it.valueHigh!!.toDouble())) {
             logger.info { "Condition met" }
 
             var urlString = "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s"
