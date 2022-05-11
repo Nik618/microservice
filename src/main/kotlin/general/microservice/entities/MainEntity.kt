@@ -6,9 +6,10 @@ import javax.persistence.*
 @Table(name="test_table")
 open class MainEntity {
 
-    constructor(_name : String, _value : String, _chatId: Long): this() {
+    constructor(_name : String, _valueLow : String, _valueHigh : String, _chatId: Long): this() {
         this.name = _name
-        this.value = _value
+        this.valueLow = _valueLow
+        this.valueHigh = _valueHigh
         this.chatId = _chatId
     }
 
@@ -22,8 +23,11 @@ open class MainEntity {
     @Column(name = "name", nullable = false)
     open var name: String? = null
 
-    @Column(name = "value", nullable = false)
-    open var value: String? = null
+    @Column(name = "valuelow", nullable = false)
+    open var valueLow: String? = null
+
+    @Column(name = "valuehigh", nullable = false)
+    open var valueHigh: String? = null
 
     @Column(name = "chatid", nullable = false)
     open var chatId: Long? = null

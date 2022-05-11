@@ -38,7 +38,7 @@ class MainService {
         return "OK"
     }
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelay = 20000)
     fun getValue(): String {
 
         val mainEntities = repository.findAll()
@@ -59,7 +59,7 @@ class MainService {
             logger.info { "Condition met" }
 
             var urlString = "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s"
-            val apiToken = "5306557210:AAGP184LM3Z_u0r2txzo-EMze_kzfec0oGg"
+            val apiToken = "5306557210:AAGx7I3230rLReD2CXRjI_Kc8XVKpI7d18c"
             val chatId = it.chatId //"1385518289"
             val text = "Цена достигла указанного значения! Текущая цена: $value"
             urlString = String.format(urlString, apiToken, chatId, text)

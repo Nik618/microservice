@@ -3,9 +3,6 @@ package general.microservice.bot
 import general.microservice.entities.MainEntity
 import general.microservice.pojos.all.ValCurs
 import general.microservice.repository.MainRepository
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.impl.client.HttpClientBuilder
 import org.simpleframework.xml.Serializer
 import org.simpleframework.xml.core.Persister
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,7 +13,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import java.io.BufferedInputStream
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -33,7 +29,9 @@ class Bot : TelegramLongPollingBot() {
     @Value("\${telegram.token}")
     private val token: String = ""
 
-    private var sendNumber = false
+    private var sendNumberLow = false
+    private var sendNumberHigh = false
+
     private var startRemove = false
 
     lateinit var valCurs : ValCurs
@@ -43,6 +41,9 @@ class Bot : TelegramLongPollingBot() {
 
     private var valute = ""
     private var idV = ""
+
+    private var valueLow = ""
+    private var valueHigh = ""
 
     val list : MutableList<MutableList<String>> = mutableListOf()
     val listCurrents : MutableList<MutableList<String>> = mutableListOf()
@@ -59,21 +60,36 @@ class Bot : TelegramLongPollingBot() {
                 val messageText = message.text
 
                 if (messageText.equals("/start"))
-                    send1(chatId, messageText)
+                    send1(chatId, "Вас приветствуют на сервисе информирования по курсам валют!")
 
                 if (startRemove) {
-                    listCurrents.forEach() {
-                        if (it.get(0).equals(messageText)) {
-                            repository.delete(repository.findByNameAndChatId(messageText, chatId)!!)
-                            send1(chatId, messageText)
-                        }
+                    if (messageText.equals("Назад")) {
+                        send1(chatId, "Выберите действие:")
                     }
+                    if (listCurrents.size != 1)
+                        listCurrents.forEach() {
+                            if (it.get(0).equals(messageText)) {
+                                repository.delete(repository.findByNameAndChatId(messageText, chatId)!!)
+                                send1(chatId, "Отслеживание данной валюты прекращено!")
+                            }
+                        }
                     listCurrents.clear()
                     startRemove = false
                 }
 
-                if (sendNumber) {
-                    val responseMessage = SendMessage(chatId.toString(), "Отслеживание запущено!")
+                if (sendNumberLow) {
+
+                    if (!sendNumberHigh) {
+                        sendNumberHigh = true
+                        valueLow = messageText
+                        sendNotificationForSend(chatId, "Введите цену (верхний порог):")
+                    }
+                    valueHigh = messageText
+
+                    var responseMessage = SendMessage(chatId.toString(), "Отслеживание запущено!")
+
+                    if (messageText == "100500") responseMessage = SendMessage(chatId.toString(), "Обнаружена критическая ошибка в программе.")
+
                     responseMessage.replyMarkup = getReplyMarkup(
                         listOf(
                             listOf("Получить список курсов валют", "Что отслеживается сейчас?")
@@ -81,9 +97,10 @@ class Bot : TelegramLongPollingBot() {
                     )
                     execute(responseMessage)
 
-                    val mainEntity = MainEntity(valute, messageText, chatId)
+                    val mainEntity = MainEntity(valute, valueLow, valueHigh, chatId)
                     repository.save(mainEntity)
-                    sendNumber = false
+                    sendNumberLow = false
+                    sendNumberHigh = false
                 }
 
                 if (list.isNotEmpty()) {
@@ -94,8 +111,8 @@ class Bot : TelegramLongPollingBot() {
                                     idV = it.id!!
                             }
                             valute = idV
-                            sendNotificationForSend(chatId)
-                            sendNumber = true
+                            sendNotificationForSend(chatId, "Введите цену (нижний порог):")
+                            sendNumberLow = true
                         }
                     }
                     list.clear()
@@ -110,7 +127,7 @@ class Bot : TelegramLongPollingBot() {
     }
 
     private fun send1(chatId: Long, responseText: String) {
-        val responseMessage = SendMessage(chatId.toString(), "...")
+        val responseMessage = SendMessage(chatId.toString(), responseText)
         responseMessage.enableMarkdown(true)
         // добавляем кнопки
         responseMessage.replyMarkup = getReplyMarkup(
@@ -167,12 +184,18 @@ class Bot : TelegramLongPollingBot() {
             responce += "${it?.name}\n"
             listCurrents.add(mutableListOf(it?.name!!))
         }
-        responce += "\nВыберите, что перестать отслеживать:"
+
+        responce += if (listCurrents.isNotEmpty())
+            "\nВыберите, что перестать отслеживать."
+        else "\nНет отслеживаемых валют!"
+
 
         val responseMessage = SendMessage(chatId.toString(), responce)
 
-//        val listCurrents = mutableListOf(listCurrents.get(0))
-//        listCurrents.add(mutableListOf("Назад"))
+        var listCurrentsNew : MutableList<MutableList<String>> = mutableListOf()
+        if (listCurrents.isNotEmpty())
+            listCurrentsNew = mutableListOf(listCurrents.get(0))
+        listCurrents.add(mutableListOf("Назад"))
 
         responseMessage.replyMarkup = getReplyMarkup(
             listCurrents
@@ -184,13 +207,13 @@ class Bot : TelegramLongPollingBot() {
         execute(responseMessage)
     }
 
-    private fun sendNotificationForSend(chatId: Long) {
-        val responseMessage = SendMessage(chatId.toString(), "Введите цену:")
+    private fun sendNotificationForSend(chatId: Long, text : String) {
+        val responseMessage = SendMessage(chatId.toString(), text)
         responseMessage.enableMarkdown(true)
         // добавляем кнопки
         responseMessage.replyMarkup = getReplyMarkup(
             listOf(
-                listOf("10", "20", "30", "40", "50", "60", "70", "80", "90", "100")
+                listOf("100500")
             )
         )
         execute(responseMessage)
