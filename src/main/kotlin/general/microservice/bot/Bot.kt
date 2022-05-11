@@ -171,8 +171,8 @@ class Bot : TelegramLongPollingBot() {
 
         val responseMessage = SendMessage(chatId.toString(), responce)
 
-        val listCurrents = mutableListOf(listCurrents.get(0))
-        listCurrents.add(mutableListOf("Назад"))
+//        val listCurrents = mutableListOf(listCurrents.get(0))
+//        listCurrents.add(mutableListOf("Назад"))
 
         responseMessage.replyMarkup = getReplyMarkup(
             listCurrents
