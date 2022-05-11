@@ -64,7 +64,7 @@ class Bot : TelegramLongPollingBot() {
                 if (startRemove) {
                     listCurrents.forEach() {
                         if (it.get(0).equals(messageText)) {
-                            repository.delete(repository.findByNameAndChatId(messageText, chatId.toString())!!)
+                            repository.delete(repository.findByNameAndChatId(messageText, chatId)!!)
                             send1(chatId, messageText)
                         }
                     }
@@ -80,10 +80,8 @@ class Bot : TelegramLongPollingBot() {
                         )
                     )
                     execute(responseMessage)
-//                    val httpClient: CloseableHttpClient? = HttpClientBuilder.create().build()
-//                    val post = HttpPost("https:/")
 
-                    val mainEntity = MainEntity(valute, messageText, chatId.toString())
+                    val mainEntity = MainEntity(valute, messageText, chatId)
                     repository.save(mainEntity)
                     sendNumber = false
                 }
@@ -96,34 +94,19 @@ class Bot : TelegramLongPollingBot() {
                                     idV = it.id!!
                             }
                             valute = idV
-                            sendNotificationForSend(chatId, messageText)
+                            sendNotificationForSend(chatId)
                             sendNumber = true
                         }
                     }
                     list.clear()
-                } else
-
-                when {
-                    messageText == "/start" -> "Добро пожаловать!"
-                    messageText.startsWith("Получить список курсов валют") -> {
+                } else {
+                    if (messageText.startsWith("Получить список курсов валют"))
                         getValutes(chatId, messageText)
-                    } // обработка нажатия кнопки
-
-                    messageText.startsWith("Что отслеживается сейчас?") -> {
-                        getCurrent(chatId, messageText)
-                    } // обработка нажатия кнопки
-
-                    else -> "Вы написали: *$messageText*"
+                    if  (messageText.startsWith("Что отслеживается сейчас?"))
+                        getCurrent(chatId)
                 }
-
             }
-
         }
-//        try {
-//            println("!")
-//        } catch (e: TelegramApiException) {
-//            e.printStackTrace()
-//        }
     }
 
     private fun send1(chatId: Long, responseText: String) {
@@ -141,7 +124,6 @@ class Bot : TelegramLongPollingBot() {
     private fun sendNotification(chatId: Long, responseText: String, valCurs: ValCurs) {
         val responseMessage = SendMessage(chatId.toString(), responseText)
         responseMessage.enableMarkdown(true)
-        // добавляем кнопки
         valCurs.list.forEach() {
             list.add(mutableListOf(it.name.toString()))
         }
@@ -178,16 +160,19 @@ class Bot : TelegramLongPollingBot() {
         return responce
     }
 
-    private fun getCurrent(chatId : Long, responseText: String) {
+    private fun getCurrent(chatId : Long) {
         var responce = ""
-        val mainEntities = repository.findAll()
+        val mainEntities = repository.findByChatId(chatId)
         mainEntities.forEach() {
-            responce += "${it.name}\n"
-            listCurrents.add(mutableListOf(it.name!!))
+            responce += "${it?.name}\n"
+            listCurrents.add(mutableListOf(it?.name!!))
         }
         responce += "\nВыберите, что перестать отслеживать:"
 
         val responseMessage = SendMessage(chatId.toString(), responce)
+
+        val listCurrents = mutableListOf(listCurrents.get(0))
+        listCurrents.add(mutableListOf("Назад"))
 
         responseMessage.replyMarkup = getReplyMarkup(
             listCurrents
@@ -199,7 +184,7 @@ class Bot : TelegramLongPollingBot() {
         execute(responseMessage)
     }
 
-    private fun sendNotificationForSend(chatId: Long, responseText: String) {
+    private fun sendNotificationForSend(chatId: Long) {
         val responseMessage = SendMessage(chatId.toString(), "Введите цену:")
         responseMessage.enableMarkdown(true)
         // добавляем кнопки
