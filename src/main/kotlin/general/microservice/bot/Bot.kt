@@ -60,7 +60,7 @@ class Bot : TelegramLongPollingBot() {
                 val messageText = message.text
 
                 if (messageText.equals("/start"))
-                    send1(chatId, "Вас приветствуют на сервисе информирования по курсам валют!")
+                    send1(chatId, "Вас приветствуют на сервисе информирования по курсам валют!\n\nЗдесь вы можете указать интервал цены рубля по отношению к другой валюте (по данным ЦБ РФ) и программа будет регулярно проверять вхождение текущей цены в этот интервал.\n\nВыберите действие:")
 
                 if (startRemove) {
                     if (messageText.equals("Назад")) {
@@ -82,13 +82,13 @@ class Bot : TelegramLongPollingBot() {
                         sendNumberHigh = true
                         valueLow = messageText
                         if (messageText != "100500")
-                            sendNotificationForSend(chatId, "Введите цену (верхний порог):")
+                            sendNotificationForSend(chatId, "Ура! Теперт введите верхний порог цены:")
                         else sendNotificationForSend(chatId, "Обнаружена критическая ошибка в программе. За последствия автор ответственности не несёт. Введите цену (верхний порог):")
                         return
                     }
                     valueHigh = messageText
 
-                    var responseMessage = SendMessage(chatId.toString(), "Отслеживание запущено! Как только цена попадёт в выбранный диапазон, программа сообщит вам об этом.")
+                    var responseMessage = SendMessage(chatId.toString(), "Отслеживание запущено! Как только реальная цена попадёт в выбранный диапазон, программа сообщит вам об этом.")
 
                     responseMessage.replyMarkup = getReplyMarkup(
                         listOf(
@@ -111,7 +111,8 @@ class Bot : TelegramLongPollingBot() {
                                     idV = it.id!!
                             }
                             valute = idV
-                            sendNotificationForSend(chatId, "Введите цену (нижний порог):")
+                            sendNotificationForSend(chatId, "Вам будет предложено ввести нижний и верхний пороги цены. Как только реальная цена окажется в этом интервале, программа сообщит вам об этом! \n" +
+                                    "\nВведите цену (нижний порог):")
                             sendNumberLow = true
                         }
                     }
@@ -213,7 +214,7 @@ class Bot : TelegramLongPollingBot() {
         // добавляем кнопки
         responseMessage.replyMarkup = getReplyMarkup(
             listOf(
-                listOf("100500")
+                listOf("100")
             )
         )
         execute(responseMessage)
