@@ -1,12 +1,13 @@
-package general.microservice.bot
+package general.microservice.service.bot
 
-import general.microservice.jpa.MainEntity
-import general.microservice.pojos.all.ValCurs
-import general.microservice.pojos.all.Valuta
-import general.microservice.repository.MainRepository
+import general.microservice.jpa.domain.TrackedValute
+import general.microservice.dto.valutes.list.all.ValCursAll
+import general.microservice.dto.valutes.list.chosen.values.ValCursChosenValues
+import general.microservice.dto.valutes.names.eng.Valuta
+import general.microservice.jpa.repository.TrackedValueRepository
+import general.microservice.service.DownloadService
 import org.simpleframework.xml.Serializer
 import org.simpleframework.xml.core.Persister
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
@@ -20,9 +21,11 @@ import java.io.InputStreamReader
 import java.net.URL
 import java.util.stream.Collectors
 
-
 @Service
-class Bot : TelegramLongPollingBot() {
+class Bot(
+    private val repository: TrackedValueRepository,
+    private val downloadService: DownloadService
+) : TelegramLongPollingBot() {
 
     @Value("\${telegram.botName}")
     private val botName: String = ""
@@ -32,18 +35,15 @@ class Bot : TelegramLongPollingBot() {
 
     private var sendNumberLow = false
     private var sendNumberHigh = false
-
     private var startRemove = false
 
-    lateinit var valCurs : ValCurs
+    lateinit var valCursAll : ValCursAll
     lateinit var valuta : Valuta
 
-    @Autowired
-    lateinit var repository: MainRepository
-
-    private var valute = ""
+    private var name = ""
     private var value = ""
     private var idV = ""
+    private var chatId = 0L
 
     private var valueLow = ""
     private var valueHigh = ""
@@ -58,7 +58,7 @@ class Bot : TelegramLongPollingBot() {
     override fun onUpdateReceived(update: Update) {
         if (update.hasMessage()) {
             val message = update.message
-            val chatId = message.chatId
+            chatId = message.chatId
             if (message.hasText()) {
                 val messageText = message.text
 
@@ -121,44 +121,43 @@ class Bot : TelegramLongPollingBot() {
                         execute(responseMessage)
 
                         val url =
-                            URL("https://www.cbr.ru/scripts/XML_dynamic.asp?date_req1=23/04/2022&date_req2=01/01/2100&VAL_NM_RQ=${valute}")
+                            URL("https://www.cbr.ru/scripts/XML_dynamic.asp?date_req1=23/04/2022&date_req2=01/01/2100&VAL_NM_RQ=${name}")
                         val bis = BufferedInputStream(url.openStream())
                         val serializer: Serializer = Persister()
-                        val valCurs = serializer.read(
-                            general.microservice.pojos.current.ValCurs::class.java,
+                        val valCursChosenValues = serializer.read(
+                            ValCursChosenValues::class.java,
                             BufferedReader(InputStreamReader(bis)).lines().collect(Collectors.joining("\n"))
                         )
-                        value = valCurs.list[valCurs.list.size - 1].value!!.replace(',', '.')
+                        value = valCursChosenValues.list[valCursChosenValues.list.size - 1].value!!.replace(',', '.')
 
-                        val mainEntity = MainEntity().apply {
-                            valute = ,
-                            value = ,
-                            valueLow = valueLow,
-                            valueHigh = valueHigh,
-                            chatId = chatId
+                        val trackedValute = TrackedValute().apply {
+                            name = this@Bot.name
+                            value = this@Bot.value
+                            valueLow = this@Bot.valueLow
+                            valueHigh = this@Bot.valueHigh
+                            chatId = this@Bot.chatId
                         }
-                        repository.save(mainEntity)
+                        repository.save(trackedValute)
                         sendNumberLow = false
                         sendNumberHigh = false
                     }
                 }
 
                 if (list.isNotEmpty()) {
-                    list.forEach() {
+                    list.forEach {
 
-                        if (it.get(0).equals("Назад")) {
+                        if (it[0] == "Назад") {
                             sendNumberLow = false
                             sendNumberHigh = false
                             send1(chatId, "Выберите действие:")
                         } else
 
-                        if (it.get(0).equals(messageText)) {
-                            valuta.list.forEach() {
-                                var name = ""
+                        if (it[0] == messageText) {
+                            valuta.list.forEach {
                                 if (it.engName.equals(messageText))
                                     idV = it.id!!
                             }
-                            valute = idV
+                            name = idV
                             sendNotificationForSend(chatId, "Вам будет предложено ввести нижний и верхний пороги цены. Как только реальная цена окажется за пределами этого интервала, программа сообщит вам об этом! \n" +
                                     "\nВведите цену (нижний порог):")
                             sendNumberLow = true
@@ -167,7 +166,7 @@ class Bot : TelegramLongPollingBot() {
                     list.clear()
                 } else {
                     if (messageText.startsWith("Получить список курсов валют"))
-                        getValutes(chatId, messageText)
+                        getValutes(chatId)
                     if  (messageText.startsWith("Что отслеживается сейчас?"))
                         getCurrent(chatId)
                 }
@@ -178,7 +177,7 @@ class Bot : TelegramLongPollingBot() {
     private fun send1(chatId: Long, responseText: String) {
         val responseMessage = SendMessage(chatId.toString(), responseText)
         responseMessage.enableMarkdown(true)
-        // добавляем кнопки
+
         responseMessage.replyMarkup = getReplyMarkup(
             listOf(
                 listOf("Получить список курсов валют", "Что отслеживается сейчас?")
@@ -187,15 +186,15 @@ class Bot : TelegramLongPollingBot() {
         execute(responseMessage)
     }
 
-    private fun sendNotification(chatId: Long, responseText: String, valCurs: ValCurs) {
+    private fun sendNotification(chatId: Long, responseText: String, valCursAll: ValCursAll) {
         val responseMessage = SendMessage(chatId.toString(), responseText)
         responseMessage.enableMarkdown(true)
         list.add(mutableListOf("Назад"))
-        valCurs.list.forEach() {
+        valCursAll.list.forEach { external ->
             var name = ""
-            valuta.list.forEach() { internal ->
-                if (internal.id == it.id)
-                    name = internal.engName!!
+            valuta.list.forEach {
+                if (it.id == external.id)
+                    name = it.engName!!
             }
             list.add(mutableListOf(name))
         }
@@ -215,31 +214,21 @@ class Bot : TelegramLongPollingBot() {
         return markup
     }
 
-    private fun getValutes(chatId : Long, responseText: String) : String {
-        var url = URL("https://www.cbr.ru/scripts/XML_daily.asp?date_req=")
-        var bis = BufferedInputStream(url.openStream())
-        val serializer: Serializer = Persister()
-        valCurs = serializer.read(
-            ValCurs::class.java, BufferedReader(InputStreamReader(bis)).lines().collect(
-                Collectors.joining("\n")))
+    private fun getValutes(chatId : Long) : String {
+        valCursAll = downloadService.downloadValutesListAll()!!
+        valuta = downloadService.downloadValutesNamesEng()!!
+
         var responce = ""
-
-        url = URL("https://www.cbr.ru/scripts/XML_val.asp?d=0")
-        bis = BufferedInputStream(url.openStream())
-        valuta = serializer.read(
-            Valuta::class.java, BufferedReader(InputStreamReader(bis)).lines().collect(
-                Collectors.joining("\n")))
-
-        valCurs.list.forEach() {
-            var name = ""
+        valCursAll.list.forEach() {
+            var engName = ""
             valuta.list.forEach() { internal ->
                 if (internal.id == it.id)
-                    name = internal.engName!!
+                    engName = internal.engName!!
             }
-            responce += "${it.value!!.replace(',', '.')}\t\t\t\t${name}\n"
+            responce += "${it.value!!.replace(',', '.')}\t\t\t\t${engName}\n"
         }
 
-        sendNotification(chatId, responce, valCurs)
+        sendNotification(chatId, responce, valCursAll)
 
         return responce
     }
@@ -248,12 +237,7 @@ class Bot : TelegramLongPollingBot() {
         var responce = ""
         val mainEntities = repository.findByChatId(chatId)
 
-        val url = URL("https://www.cbr.ru/scripts/XML_val.asp?d=0")
-        val bis = BufferedInputStream(url.openStream())
-        val serializer: Serializer = Persister()
-        valuta = serializer.read(
-            Valuta::class.java, BufferedReader(InputStreamReader(bis)).lines().collect(
-                Collectors.joining("\n")))
+        valuta = downloadService.downloadValutesNamesEng()!!
 
         mainEntities.forEach() {
             var name = ""
@@ -271,9 +255,9 @@ class Bot : TelegramLongPollingBot() {
 
         val responseMessage = SendMessage(chatId.toString(), responce)
 
-        var listCurrentsNew : MutableList<MutableList<String>> = mutableListOf()
-        if (listCurrents.isNotEmpty())
-            listCurrentsNew = mutableListOf(listCurrents.get(0))
+//        var listCurrentsNew : MutableList<MutableList<String>> = mutableListOf()
+//        if (listCurrents.isNotEmpty())
+//            listCurrentsNew = mutableListOf(listCurrents[0])
         listCurrents.add(mutableListOf("Назад"))
 
         responseMessage.replyMarkup = getReplyMarkup(
@@ -289,7 +273,7 @@ class Bot : TelegramLongPollingBot() {
     private fun sendNotificationForSend(chatId: Long, text : String) {
         val responseMessage = SendMessage(chatId.toString(), text)
         responseMessage.enableMarkdown(true)
-        // добавляем кнопки
+
         responseMessage.replyMarkup = getReplyMarkup(
             listOf(
                 listOf("Назад")

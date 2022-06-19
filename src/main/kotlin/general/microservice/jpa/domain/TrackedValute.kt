@@ -1,20 +1,10 @@
-package general.microservice.jpa
+package general.microservice.jpa.domain
 
 import javax.persistence.*
 
 @Entity
-@Table(name="test_table")
-open class MainEntity {
-
-//    constructor(_name : String, _value : String, _valueLow : String, _valueHigh : String, _chatId: Long): this() {
-//        this.name = _name
-//        this.value = _value
-//        this.valueLow = _valueLow
-//        this.valueHigh = _valueHigh
-//        this.chatId = _chatId
-//    }
-
-    constructor()
+@Table(name="tracked_valute")
+open class TrackedValute {
 
     @Id
     @Column(name = "id", nullable = false)

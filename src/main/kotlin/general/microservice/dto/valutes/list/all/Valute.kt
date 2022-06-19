@@ -1,8 +1,7 @@
-package general.microservice.pojos.all
+package general.microservice.dto.valutes.list.all
 
 import org.simpleframework.xml.Attribute
 import org.simpleframework.xml.Element
-import org.simpleframework.xml.ElementList
 import org.simpleframework.xml.Root
 
 @Root(name = "Valute", strict = false)

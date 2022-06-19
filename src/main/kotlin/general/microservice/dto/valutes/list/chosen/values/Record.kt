@@ -1,7 +1,6 @@
-package general.microservice.pojos.current
+package general.microservice.dto.valutes.list.chosen.values
 
 import org.simpleframework.xml.Element
-import org.simpleframework.xml.ElementList
 import org.simpleframework.xml.Root
 
 @Root(name = "Record", strict = false)
