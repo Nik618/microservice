@@ -11,6 +11,7 @@ import java.io.BufferedInputStream
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.URL
+import java.net.URLConnection
 
 @RestController
 class ValuteService(
@@ -50,6 +51,7 @@ class ValuteService(
             val text = "Цена $engName достигла указанного значения! Текущая цена: $value"
             urlString = String.format(urlString, apiToken, chatId, text)
             val url = URL(urlString)
+            val urlConnection = URLConnection(url)
             val sb = StringBuilder()
             val br = BufferedReader(
                 InputStreamReader(
