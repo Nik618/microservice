@@ -48,20 +48,16 @@ class ValuteService(
                         engName = internal.engName!!
                 } }
 
-            val text = "Цена $engName достигла указанного значения! Текущая цена: $value"
+
+
+            val text = "Цена ${engName} достигла указанного значения! Текущая цена: $value"
             urlString = String.format(urlString, apiToken, chatId, text)
             val url = URL(urlString)
-            val urlConnection = URLConnection(url)
+            val conn: URLConnection = url.openConnection()
             val sb = StringBuilder()
-            val br = BufferedReader(
-                InputStreamReader(
-                    BufferedInputStream(
-                        url).openConnection().getInputStream()
-                    )
-                )
-            )
+            val br = BufferedReader(InputStreamReader(BufferedInputStream(conn.getInputStream())))
 
-            var inputLine: String
+            var inputLine: String? = ""
             while (br.readLine().also { inputLine = it } != null) {
                 sb.append(inputLine)
             }
