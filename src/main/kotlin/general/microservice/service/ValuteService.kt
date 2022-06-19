@@ -4,32 +4,17 @@ import general.microservice.dto.valutes.list.chosen.values.ValCursChosenValues
 import general.microservice.jpa.domain.TrackedValute
 import general.microservice.jpa.repository.TrackedValueRepository
 import mu.KotlinLogging
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
-import java.io.BufferedInputStream
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.URL
-import java.net.URLConnection
+import org.springframework.stereotype.Service
 
-@RestController
+@Service
 class ValuteService(
     private val downloadService: DownloadService,
-    private var trackedValueRepository: TrackedValueRepository,
+    private val trackedValueRepository: TrackedValueRepository,
+    private val sendService: SendService
 ) {
     private var chatId = 0L
-    private var urlString = "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s"
     private val apiToken = "5306557210:AAGx7I3230rLReD2CXRjI_Kc8XVKpI7d18c"
     private val logger = KotlinLogging.logger {}
-    private var giveValue = -1;
-
-    @PostMapping("/api/1")
-    fun giveValue(@RequestBody request: Int): String? {
-        giveValue = request
-        logger.info { "Give value $request done" }
-        return "OK"
-    }
 
     fun checkCondition(entity: TrackedValute, valCursChosenValues: ValCursChosenValues) {
         val value = valCursChosenValues.list[valCursChosenValues.list.size-1].value!!.replace(',', '.')
@@ -38,7 +23,7 @@ class ValuteService(
 
         if ((entity.valueLow!!.toDouble() > value.toDouble()) || (value.toDouble() > entity.valueHigh!!.toDouble())) {
             logger.info { "Condition met" }
-            chatId = entity.chatId!! //"1385518289"
+            chatId = entity.chatId!!
             val valuta = downloadService.downloadValutesNamesEng()!!
 
             var engName = ""
@@ -46,21 +31,10 @@ class ValuteService(
                 valuta.list.forEach() { internal ->
                     if (internal.id == entity.name)
                         engName = internal.engName!!
-                } }
-
-
-
-            val text = "Цена ${engName} достигла указанного значения! Текущая цена: $value"
-            urlString = String.format(urlString, apiToken, chatId, text)
-            val url = URL(urlString)
-            val conn: URLConnection = url.openConnection()
-            val sb = StringBuilder()
-            val br = BufferedReader(InputStreamReader(BufferedInputStream(conn.getInputStream())))
-
-            var inputLine: String? = ""
-            while (br.readLine().also { inputLine = it } != null) {
-                sb.append(inputLine)
+                }
             }
+
+            sendService.sendToTelegram(apiToken, chatId, engName, value)
 
         } else {
             logger.info { "Condition not met" }

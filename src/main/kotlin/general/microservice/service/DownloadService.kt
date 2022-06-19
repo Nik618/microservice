@@ -14,9 +14,7 @@ import java.time.format.DateTimeFormatter
 import java.util.stream.Collectors
 
 @Service
-class DownloadService(
-
-) {
+class DownloadService {
 
     fun downloadValutesListAll(): ValCursAll? {
         val bis = BufferedInputStream(

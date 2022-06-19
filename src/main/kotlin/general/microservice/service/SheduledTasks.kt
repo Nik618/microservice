@@ -17,16 +17,12 @@ class SheduledTasks(
     private val logger = KotlinLogging.logger {}
 
     @Scheduled(fixedDelay = 20000)
-    fun getValue() {
-
+    fun checkCondition() {
         val mainEntities = trackedValueRepository.findAll()
         mainEntities.forEach() { it ->
             logger.info { "Найдена запись ${it.name}" }
-
             val valCurs = downloadService.downloadValutesListChosenValues(it.name!!)!!
-
             logger.info { "Request successful done" }
-
             valuteService.checkCondition(it, valCurs)
         }
     }
