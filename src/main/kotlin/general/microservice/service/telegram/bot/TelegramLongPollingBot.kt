@@ -51,11 +51,8 @@ class TelegramLongPollingBot(
             chatId = update.message.chatId
             messageText = update.message.text
 
-            if (messageText == "/start") {
-                toMainMenu(
-                    chatId,
-                    "Вас приветствуют на сервисе информирования по курсам валют!\n\nЗдесь вы можете указать интервал цены рубля по отношению к другой валюте (по данным ЦБ РФ) и программа будет регулярно проверять выход текущей цены за этот интервал.\n\nВыберите действие:"
-                )
+             if (messageText == "/start") {
+                toMainMenu(chatId, "Вас приветствуют на сервисе информирования по курсам валют!\n\nЗдесь вы можете указать интервал цены рубля по отношению к другой валюте (по данным ЦБ РФ) и программа будет регулярно проверять выход текущей цены за этот интервал.\n\nВыберите действие:")
                 return
             }
             if (messageText == "Назад") {
@@ -184,24 +181,23 @@ class TelegramLongPollingBot(
 
         responseMessage.enableMarkdown(true)
 
-        if (listCurrents.size != 1)
-            listCurrents.forEach() {
-                var name = ""
-                execute(responseMessage)
-            }
+        execute(responseMessage)
     }
 
     fun delete() {
         startRemove = false
-            valuta.list.forEach() { internal ->
-                if (internal.engName.equals(messageText))
-                    name = internal.id!!
-            }
-            if (it[0] == messageText) {
-                repository.delete(repository.findByNameAndChatId(name, chatId)!!)
-                toMainMenu(chatId, "Отслеживание данной валюты прекращено!")
-            } else toMainMenu(chatId, "Выберите действие:")
+        if (listCurrents.size != 1)
+            listCurrents.forEach() {
 
+                valuta.list.forEach() { internal ->
+                    if (internal.engName.equals(messageText))
+                        name = internal.id!!
+                }
+                if (it[0] == messageText) {
+                    repository.delete(repository.findByNameAndChatId(name, chatId)!!)
+                    toMainMenu(chatId, "Отслеживание данной валюты прекращено!")
+                } else toMainMenu(chatId, "Выберите действие:")
+            }
     }
 
     fun sendNumberLow() {
@@ -251,6 +247,7 @@ class TelegramLongPollingBot(
         sendNumberLow = false
         sendNumberHigh = false
         sendName = false
+        startRemove = false
         toMainMenu(chatId, "Выберите действие:")
     }
     
