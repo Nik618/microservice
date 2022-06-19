@@ -1,4 +1,4 @@
-package general.microservice.entities
+package general.microservice.jpa
 
 import javax.persistence.*
 
@@ -6,12 +6,13 @@ import javax.persistence.*
 @Table(name="test_table")
 open class MainEntity {
 
-    constructor(_name : String, _valueLow : String, _valueHigh : String, _chatId: Long): this() {
-        this.name = _name
-        this.valueLow = _valueLow
-        this.valueHigh = _valueHigh
-        this.chatId = _chatId
-    }
+//    constructor(_name : String, _value : String, _valueLow : String, _valueHigh : String, _chatId: Long): this() {
+//        this.name = _name
+//        this.value = _value
+//        this.valueLow = _valueLow
+//        this.valueHigh = _valueHigh
+//        this.chatId = _chatId
+//    }
 
     constructor()
 
@@ -28,6 +29,9 @@ open class MainEntity {
 
     @Column(name = "valuehigh", nullable = false)
     open var valueHigh: String? = null
+
+    @Column(name = "value", nullable = false)
+    open var value: String? = null
 
     @Column(name = "chatid", nullable = false)
     open var chatId: Long? = null

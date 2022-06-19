@@ -1,6 +1,6 @@
 package general.microservice.repository
 
-import general.microservice.entities.MainEntity
+import general.microservice.jpa.MainEntity
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 

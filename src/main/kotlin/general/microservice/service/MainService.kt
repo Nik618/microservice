@@ -1,7 +1,6 @@
 package general.microservice.service
 
-import general.microservice.bot.Bot
-import general.microservice.entities.MainEntity
+import general.microservice.pojos.all.Valuta
 import general.microservice.pojos.current.ValCurs
 import general.microservice.repository.MainRepository
 import mu.KotlinLogging
@@ -45,37 +44,56 @@ class MainService {
         mainEntities.forEach() {
             logger.info { "Найдена запись ${it.name}" }
             url = URL("https://www.cbr.ru/scripts/XML_dynamic.asp?date_req1=23/04/2022&date_req2=01/01/2100&VAL_NM_RQ=${it.name}")
-            val bis = BufferedInputStream(url.openStream())
+            var bis = BufferedInputStream(url.openStream())
             val serializer: Serializer = Persister()
             val valCurs = serializer.read(ValCurs::class.java, BufferedReader(InputStreamReader(bis)).lines().collect(Collectors.joining("\n")))
             val value = valCurs.list[valCurs.list.size-1].value!!.replace(',', '.')
+            it?.value = value
             bis.close()
 
-        //repository.save(mainEntity)
+            repository.save(it)
 
 
-        logger.info { "Request successful done" }
-        if ((it.valueLow!!.toDouble() < value.toDouble()) && (value.toDouble() < it.valueHigh!!.toDouble())) {
-            logger.info { "Condition met" }
+            logger.info { "Request successful done" }
+            if ((it.valueLow!!.toDouble() > value.toDouble()) || (value.toDouble() > it.valueHigh!!.toDouble())) {
+                logger.info { "Condition met" }
 
-            var urlString = "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s"
-            val apiToken = "5306557210:AAGx7I3230rLReD2CXRjI_Kc8XVKpI7d18c"
-            val chatId = it.chatId //"1385518289"
-            val text = "Цена достигла указанного значения! Текущая цена: $value"
-            urlString = String.format(urlString, apiToken, chatId, text)
-            val url = URL(urlString)
-            val conn: URLConnection = url.openConnection()
-            val sb = StringBuilder()
-            val br = BufferedReader(InputStreamReader(BufferedInputStream(conn.getInputStream())))
-            var inputLine: String? = ""
-            while (br.readLine().also { inputLine = it } != null) {
-                sb.append(inputLine)
+                var urlString = "https://api.telegram.org/bot%s/sendMessage?chat_id=%s&text=%s"
+                val apiToken = "5306557210:AAGx7I3230rLReD2CXRjI_Kc8XVKpI7d18c"
+                val chatId = it.chatId //"1385518289"
+
+
+
+                var name = ""
+                url = URL("https://www.cbr.ru/scripts/XML_val.asp?d=0")
+                bis = BufferedInputStream(url.openStream())
+                val valuta = serializer.read(
+                    Valuta::class.java, BufferedReader(InputStreamReader(bis)).lines().collect(
+                        Collectors.joining("\n")))
+
+                valCurs.list.forEach() { external ->
+                    valuta.list.forEach() { internal ->
+                        if (internal.id == it.name)
+                            name = internal.engName!!
+                    } }
+
+                bis.close()
+
+                val text = "Цена ${name} достигла указанного значения! Текущая цена: $value"
+                urlString = String.format(urlString, apiToken, chatId, text)
+                val url = URL(urlString)
+                val conn: URLConnection = url.openConnection()
+                val sb = StringBuilder()
+                val br = BufferedReader(InputStreamReader(BufferedInputStream(conn.getInputStream())))
+                var inputLine: String? = ""
+                while (br.readLine().also { inputLine = it } != null) {
+                    sb.append(inputLine)
+                }
+                //"OK $sb"
+            } else {
+                logger.error { "Condition not met" }
+                //"ERROR"
             }
-            //"OK $sb"
-        } else {
-            logger.error { "Condition not met" }
-            //"ERROR"
-        }
         }
 
 
