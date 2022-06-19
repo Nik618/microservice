@@ -4,8 +4,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class MicroserviceApplication
+class MainApplicationTests
 
 fun main(args: Array<String>) {
-    runApplication<MicroserviceApplication>(*args)
+    runApplication<MainApplicationTests>(*args)
 }
